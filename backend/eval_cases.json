@@ -1,0 +1,34 @@
+[
+  {
+    "id": "assess_known_patient",
+    "mode": "assess",
+    "payload": {"patient_id": "PT-101", "top_k": 5},
+    "expected_action": "allow"
+  },
+  {
+    "id": "assess_unknown_patient",
+    "mode": "assess",
+    "payload": {"patient_id": "PT-999", "top_k": 5},
+    "expected_status": 404
+  },
+  {
+    "id": "chat_referral_question",
+    "mode": "chat",
+    "payload": {
+      "session_id": "eval-session",
+      "message": "What symptoms trigger urgent referral for lung cancer?",
+      "top_k": 5
+    },
+    "expected_action": "allow"
+  },
+  {
+    "id": "chat_under_40_followup",
+    "mode": "chat",
+    "payload": {
+      "session_id": "eval-session",
+      "message": "What about if the patient is under 40?",
+      "top_k": 5
+    },
+    "expected_action": "allow"
+  }
+]
