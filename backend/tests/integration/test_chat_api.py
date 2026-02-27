@@ -50,3 +50,18 @@ def test_chat_multi_turn_follow_up() -> None:
     assert second.json()["answer"] == "Follow-up acknowledged"
 
     app.dependency_overrides.clear()
+
+
+def test_chat_response_includes_safety_block() -> None:
+    fake_agent = FakeChatAgent()
+    app.dependency_overrides[get_chat_agent] = lambda: fake_agent
+    client = TestClient(app)
+
+    response = client.post("/chat", json={"session_id": "xyz", "message": "What does NG12 say about cough?"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["safety"]["action"] == "allow"
+    assert "citations" in payload
+
+    app.dependency_overrides.clear()
