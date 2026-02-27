@@ -81,6 +81,10 @@ textarea {
   min-width: 220px;
 }
 
+textarea {
+  min-width: 420px;
+}
+
 button {
   border: 0;
   border-radius: 10px;
@@ -150,4 +154,36 @@ button:disabled {
   padding-left: 18px;
   display: grid;
   gap: 8px;
+}
+
+.chat-window {
+  margin-top: 16px;
+  border: 1px solid #d7e1f2;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #f8fbff;
+}
+
+.bubble {
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.bubble.user {
+  background: #eaf2ff;
+  border: 1px solid #d5e4fb;
+}
+
+.bubble.assistant {
+  background: #eef9f1;
+  border: 1px solid #d5efda;
+}
+
+.muted {
+  color: #65758b;
+  margin: 0;
 }

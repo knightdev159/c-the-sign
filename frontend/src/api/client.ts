@@ -35,6 +35,16 @@ export type ChatResponse = {
   safety: SafetyBlock;
 };
 
+export type ChatTurn = {
+  role: string;
+  content: string;
+};
+
+export type ChatHistoryResponse = {
+  session_id: string;
+  history: ChatTurn[];
+};
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -65,6 +75,14 @@ export const apiClient = {
     return request<ChatResponse>("/chat", {
       method: "POST",
       body: JSON.stringify({ session_id: sessionId, message, top_k: topK }),
+    });
+  },
+  chatHistory(sessionId: string): Promise<ChatHistoryResponse> {
+    return request<ChatHistoryResponse>(`/chat/${sessionId}/history`);
+  },
+  clearChat(sessionId: string): Promise<{ session_id: string; deleted: boolean }> {
+    return request<{ session_id: string; deleted: boolean }>(`/chat/${sessionId}`, {
+      method: "DELETE",
     });
   },
 };

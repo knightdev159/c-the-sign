@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { ChatAssistant } from "./components/ChatAssistant";
 import { RiskAssessor } from "./components/RiskAssessor";
 
 type TabId = "assess" | "chat";
@@ -38,7 +39,7 @@ export function App() {
         {activeTab === "assess" ? (
           <RiskAssessor />
         ) : (
-          <p>Chat interface will be enabled in the next commit.</p>
+          <ChatAssistant />
         )}
       </main>
     </div>
