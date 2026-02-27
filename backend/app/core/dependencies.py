@@ -7,6 +7,8 @@ from app.core.config import get_settings
 from app.services.chat_agent import ChatAgent
 from app.services.embedding_client import EmbeddingClient
 from app.services.llm_client import LLMClient
+from app.services.rule_engine import RuleEngine
+from app.services.safety_validator import SafetyValidator
 from app.services.vector_store import VectorStore
 from app.storage.session_memory import SessionMemoryStore
 
@@ -49,9 +51,21 @@ def get_memory_store() -> SessionMemoryStore:
 
 
 @lru_cache(maxsize=1)
+def get_rule_engine() -> RuleEngine:
+    settings = get_settings()
+    return RuleEngine(rules_path=Path(settings.guideline_rules_path))
+
+
+@lru_cache(maxsize=1)
+def get_safety_validator() -> SafetyValidator:
+    return SafetyValidator(rule_engine=get_rule_engine())
+
+
+@lru_cache(maxsize=1)
 def get_chat_agent() -> ChatAgent:
     return ChatAgent(
         memory_store=get_memory_store(),
         vector_store=get_vector_store(),
         llm_client=get_llm_client(),
+        safety_validator=get_safety_validator(),
     )

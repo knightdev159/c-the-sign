@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from app.schemas.chat import ChatResponse
-from app.schemas.common import CitationResponse, SafetyResponse
+from app.schemas.common import CitationResponse
 from app.services.llm_client import LLMClient
+from app.services.safety_validator import SafetyValidator
 from app.services.vector_store import VectorStore
 from app.storage.session_memory import ChatTurn, SessionMemoryStore
 
@@ -15,10 +16,12 @@ class ChatAgent:
         memory_store: SessionMemoryStore,
         vector_store: VectorStore,
         llm_client: LLMClient,
+        safety_validator: SafetyValidator,
     ) -> None:
         self._memory_store = memory_store
         self._vector_store = vector_store
         self._llm_client = llm_client
+        self._safety_validator = safety_validator
 
     def respond(self, session_id: str, message: str, top_k: int = 5) -> ChatResponse:
         history = self._memory_store.get_history(session_id)
@@ -52,28 +55,17 @@ class ChatAgent:
                 ),
                 user_prompt=prompt,
             )
-            grounded = True
-            safety = SafetyResponse(
-                action="allow",
-                groundedness_score=1.0,
-                evidence_coverage=1.0,
-                rule_consistency="unknown",
-                unsupported_claims=[],
-                conflicts=[],
-                notes=[],
-            )
         else:
             answer = "I couldn't find support in the NG12 text for that in the retrieved evidence."
-            grounded = False
-            safety = SafetyResponse(
-                action="qualify",
-                groundedness_score=0.0,
-                evidence_coverage=0.0,
-                rule_consistency="unknown",
-                unsupported_claims=["No supporting evidence retrieved"],
-                conflicts=[],
-                notes=["Insufficient evidence for grounded answer."],
-            )
+
+        safety = self._safety_validator.validate(
+            answer_text=answer,
+            chunks=chunks,
+            mode="chat",
+        )
+        grounded = bool(citations) and safety.action != "abstain"
+        if safety.action == "abstain":
+            answer = "I couldn't find sufficiently supported NG12 evidence to answer that safely."
 
         self._memory_store.append_turn(session_id, ChatTurn(role="user", content=message))
         self._memory_store.append_turn(session_id, ChatTurn(role="assistant", content=answer))

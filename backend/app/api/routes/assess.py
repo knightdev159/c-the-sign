@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.config import get_settings
-from app.core.dependencies import get_llm_client, get_vector_store
+from app.core.dependencies import get_llm_client, get_safety_validator, get_vector_store
 from app.schemas.assess import AssessRequest, AssessResponse
 from app.services.decision_agent import DecisionAgent
 from app.storage.patient_repository import PatientRepository
@@ -25,6 +25,7 @@ def get_decision_agent(
         patient_repo=patient_repo,
         vector_store=get_vector_store(),
         llm_client=get_llm_client(),
+        safety_validator=get_safety_validator(),
         model_name=settings.llm_model,
     )
 

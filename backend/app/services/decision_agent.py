@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from app.domain.patient import PatientRecord
 from app.schemas.assess import AssessResponse
-from app.schemas.common import CitationResponse, SafetyResponse
+from app.schemas.common import CitationResponse
 from app.services.llm_client import LLMClient
+from app.services.safety_validator import SafetyValidator
 from app.services.vector_store import VectorStore
 from app.storage.patient_repository import PatientRepository
 
@@ -18,11 +19,13 @@ class DecisionAgent:
         patient_repo: PatientRepository,
         vector_store: VectorStore,
         llm_client: LLMClient,
+        safety_validator: SafetyValidator,
         model_name: str,
     ) -> None:
         self._patient_repo = patient_repo
         self._vector_store = vector_store
         self._llm_client = llm_client
+        self._safety_validator = safety_validator
         self._model_name = model_name
 
     def assess(self, patient_id: str, top_k: int = 5) -> AssessResponse:
@@ -63,16 +66,20 @@ class DecisionAgent:
             for chunk in chunks[:3]
         ]
 
-        grounded = bool(citations)
-        safety = SafetyResponse(
-            action="allow" if grounded else "qualify",
-            groundedness_score=1.0 if grounded else 0.0,
-            evidence_coverage=1.0 if grounded else 0.0,
-            rule_consistency="unknown",
-            unsupported_claims=[],
-            conflicts=[],
-            notes=[] if grounded else ["No supporting NG12 passages were retrieved."],
+        safety = self._safety_validator.validate(
+            answer_text=reasoning,
+            chunks=chunks,
+            mode="assess",
+            patient=patient,
+            recommendation=recommendation,
         )
+        grounded = bool(citations) and safety.action != "abstain"
+        if safety.action == "abstain":
+            recommendation = "insufficient_evidence"
+            reasoning = (
+                "The agent abstained due to insufficient or conflicting support in the "
+                "retrieved NG12 evidence."
+            )
 
         return AssessResponse(
             patient_id=patient.patient_id,

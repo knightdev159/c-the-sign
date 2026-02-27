@@ -1,0 +1,36 @@
+rules:
+  - id: hemoptysis_referral
+    symptoms:
+      - unexplained hemoptysis
+    expected_recommendation: urgent_referral
+    note: Unexplained hemoptysis is treated as urgent referral trigger.
+
+  - id: haematuria_referral
+    symptoms:
+      - visible haematuria
+    expected_recommendation: urgent_referral
+    note: Visible haematuria should trigger urgent referral.
+
+  - id: breast_lump_referral
+    symptoms:
+      - unexplained breast lump
+    expected_recommendation: urgent_referral
+    note: Unexplained breast lump should trigger urgent referral pathway.
+
+  - id: dysphagia_investigation
+    symptoms:
+      - dysphagia
+    expected_recommendation: urgent_investigation
+    note: Dysphagia supports urgent investigation workflow.
+
+  - id: hoarseness_investigation
+    symptoms:
+      - persistent hoarseness
+    expected_recommendation: urgent_investigation
+    note: Persistent hoarseness supports urgent investigation.
+
+  - id: ida_investigation
+    symptoms:
+      - iron-deficiency anaemia
+    expected_recommendation: urgent_investigation
+    note: Iron-deficiency anaemia supports urgent investigation.

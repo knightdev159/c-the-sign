@@ -13,6 +13,7 @@ dependencies = [
   "fastapi>=0.115.0",
   "google-cloud-aiplatform>=1.67.0",
   "pypdf>=5.1.0",
+  "PyYAML>=6.0.2",
   "uvicorn>=0.30.0",
   "pydantic>=2.7.0",
   "pydantic-settings>=2.3.0"
