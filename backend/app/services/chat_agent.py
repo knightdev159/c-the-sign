@@ -25,6 +25,7 @@ class ChatAgent:
 
     def respond(self, session_id: str, message: str, top_k: int = 5) -> ChatResponse:
         history = self._memory_store.get_history(session_id)
+        # Keep only recent turns to avoid overly long prompts.
         recent_context = "\n".join(f"{turn.role}: {turn.content}" for turn in history[-6:])
 
         query = message if not recent_context else f"Context:\n{recent_context}\n\nQuestion:\n{message}"
@@ -65,8 +66,10 @@ class ChatAgent:
         )
         grounded = bool(citations) and safety.action != "abstain"
         if safety.action == "abstain":
+            # Replace the answer text when safety layer detects unsupported claims.
             answer = "I couldn't find sufficiently supported NG12 evidence to answer that safely."
 
+        # Persist both user and assistant turns for follow-up questions.
         self._memory_store.append_turn(session_id, ChatTurn(role="user", content=message))
         self._memory_store.append_turn(session_id, ChatTurn(role="assistant", content=answer))
 

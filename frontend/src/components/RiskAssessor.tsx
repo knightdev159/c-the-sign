@@ -10,6 +10,7 @@ export function RiskAssessor() {
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    // Reset transient UI state each time the user runs a new assessment.
     setLoading(true);
     setError(null);
 

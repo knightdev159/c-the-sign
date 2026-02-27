@@ -15,6 +15,7 @@ from app.storage.session_memory import SessionMemoryStore
 
 @lru_cache(maxsize=1)
 def get_embedding_client() -> EmbeddingClient:
+    # Singleton dependency: all requests share one embedding client instance.
     settings = get_settings()
     return EmbeddingClient(
         provider=settings.embedding_provider,
@@ -26,6 +27,7 @@ def get_embedding_client() -> EmbeddingClient:
 
 @lru_cache(maxsize=1)
 def get_vector_store() -> VectorStore:
+    # This is the shared RAG index reused by both /assess and /chat.
     settings = get_settings()
     return VectorStore(
         persist_dir=Path(settings.vector_db_path),
@@ -36,6 +38,7 @@ def get_vector_store() -> VectorStore:
 
 @lru_cache(maxsize=1)
 def get_llm_client() -> LLMClient:
+    # LLM provider can switch between Vertex and mock with environment flags.
     settings = get_settings()
     return LLMClient(
         provider=settings.llm_provider,
@@ -47,22 +50,26 @@ def get_llm_client() -> LLMClient:
 
 @lru_cache(maxsize=1)
 def get_memory_store() -> SessionMemoryStore:
+    # In-memory store is acceptable for this take-home and keeps chat state simple.
     return SessionMemoryStore()
 
 
 @lru_cache(maxsize=1)
 def get_rule_engine() -> RuleEngine:
+    # Rule engine loads curated NG12 checks used by the safety validator.
     settings = get_settings()
     return RuleEngine(rules_path=Path(settings.guideline_rules_path))
 
 
 @lru_cache(maxsize=1)
 def get_safety_validator() -> SafetyValidator:
+    # Single validator instance to keep behavior consistent across endpoints.
     return SafetyValidator(rule_engine=get_rule_engine())
 
 
 @lru_cache(maxsize=1)
 def get_chat_agent() -> ChatAgent:
+    # Chat agent composes shared RAG + safety + session memory.
     return ChatAgent(
         memory_store=get_memory_store(),
         vector_store=get_vector_store(),

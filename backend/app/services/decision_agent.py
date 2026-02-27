@@ -33,9 +33,11 @@ class DecisionAgent:
         if patient is None:
             raise KeyError(patient_id)
 
+        # The retrieval query is built from structured patient features.
         query = self._build_query(patient)
         chunks = self._vector_store.query(query_text=query, top_k=top_k)
 
+        # Lightweight deterministic baseline recommendation before LLM reasoning.
         recommendation, matched_criteria = self._recommendation(patient)
         if not chunks:
             recommendation = "insufficient_evidence"
@@ -75,6 +77,7 @@ class DecisionAgent:
         )
         grounded = bool(citations) and safety.action != "abstain"
         if safety.action == "abstain":
+            # Safety gate has the final say for clinical outputs.
             recommendation = "insufficient_evidence"
             reasoning = (
                 "The agent abstained due to insufficient or conflicting support in the "
@@ -106,6 +109,7 @@ class DecisionAgent:
     def _recommendation(patient: PatientRecord) -> tuple[str, list[str]]:
         symptoms = {s.lower() for s in patient.symptoms}
 
+        # These sets are intentionally explicit for readability in a take-home project.
         urgent_referral = {
             "unexplained hemoptysis",
             "visible haematuria",

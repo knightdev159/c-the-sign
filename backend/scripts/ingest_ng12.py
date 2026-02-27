@@ -103,6 +103,7 @@ def chunk_page(page_text: str, page_number: int, chunk_size: int, chunk_overlap:
     if not text:
         return []
 
+    # Sliding window chunking keeps local context while preserving continuity via overlap.
     step = max(1, chunk_size - chunk_overlap)
     chunks: list[PageChunk] = []
 
@@ -111,6 +112,7 @@ def chunk_page(page_text: str, page_number: int, chunk_size: int, chunk_overlap:
     while cursor < len(text):
         end = min(len(text), cursor + chunk_size)
         chunk_text = text[cursor:end]
+        # Deterministic chunk IDs are required for stable citations.
         chunk_id = f"ng12_{page_number:04d}_{index:02d}"
         chunks.append(
             PageChunk(
@@ -187,6 +189,7 @@ def main() -> None:
     for batch in batched(chunks):
         ids = [item.chunk_id for item in batch]
         docs = [item.text for item in batch]
+        # Metadata is stored alongside embeddings to power citation rendering at query time.
         metas = [
             {
                 "source": "NG12 PDF",

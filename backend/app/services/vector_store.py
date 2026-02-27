@@ -19,6 +19,7 @@ class VectorStore:
         self._collection = self._client.get_or_create_collection(name=collection_name)
 
     def query(self, query_text: str, top_k: int = 5) -> list[RetrievedChunk]:
+        # Retrieval uses query embeddings so assess/chat share identical vector behavior.
         query_embedding = self._embedding_client.embed([query_text])[0]
         result = self._collection.query(
             query_embeddings=[query_embedding],
@@ -33,6 +34,7 @@ class VectorStore:
         chunks: list[RetrievedChunk] = []
         for doc, meta, distance in zip(docs, metas, distances):
             metadata = meta or {}
+            # Normalize Chroma rows into a strict internal model for downstream safety/citations.
             chunks.append(
                 RetrievedChunk(
                     chunk_id=str(metadata.get("chunk_id", "")),

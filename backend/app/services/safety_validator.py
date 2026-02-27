@@ -25,7 +25,9 @@ class SafetyValidator:
         patient: PatientRecord | None = None,
         recommendation: str | None = None,
     ) -> SafetyResponse:
+        # Step 1: convert free-text response into atomic claims.
         claims = ClaimExtractor.extract(answer_text)
+        # Step 2: estimate how much of the response is supported by retrieved evidence.
         evidence_score = EvidenceScorer.score(claims, chunks)
 
         conflicts: list[str] = []
@@ -39,6 +41,7 @@ class SafetyValidator:
         action = "allow"
         notes: list[str] = []
 
+        # Gate priority is strict: rule conflicts > unsupported claims > low coverage.
         if conflicts:
             action = "abstain"
             notes.append("Recommendation conflicts with rule checks.")

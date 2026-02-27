@@ -11,6 +11,7 @@ export function ChatAssistant() {
   const [latest, setLatest] = useState<ChatResponse | null>(null);
 
   useEffect(() => {
+    // Session switch should immediately display that session's existing turns.
     void loadHistory(sessionId);
   }, [sessionId]);
 
@@ -35,6 +36,7 @@ export function ChatAssistant() {
       const response = await apiClient.chat(sessionId.trim(), message.trim());
       setLatest(response);
       setMessage("");
+      // Refresh history from API so UI always matches backend source of truth.
       await loadHistory(sessionId.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send chat message");
