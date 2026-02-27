@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 
+import { RiskAssessor } from "./components/RiskAssessor";
+
 type TabId = "assess" | "chat";
 
 export function App() {
@@ -33,7 +35,11 @@ export function App() {
 
       <main className="panel">
         <h2>{tabTitle}</h2>
-        <p>Frontend scaffold complete. Feature-specific interactions are implemented in subsequent commits.</p>
+        {activeTab === "assess" ? (
+          <RiskAssessor />
+        ) : (
+          <p>Chat interface will be enabled in the next commit.</p>
+        )}
       </main>
     </div>
   );

@@ -56,3 +56,98 @@ body {
   background: #ffffff;
   padding: 24px;
 }
+
+.feature {
+  margin-top: 14px;
+}
+
+.stack {
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input,
+textarea {
+  border: 1px solid #c4d2ea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  min-width: 220px;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  background: #2f6fb3;
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.error {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.result-card {
+  margin-top: 18px;
+  border: 1px solid #d7e1f2;
+  border-radius: 14px;
+  padding: 16px;
+  background: #fafcff;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.badge.allow {
+  background: #15803d;
+}
+
+.badge.qualify {
+  background: #b45309;
+}
+
+.badge.abstain {
+  background: #b42318;
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0;
+  font-size: 0.9rem;
+  color: #4f5d73;
+}
+
+.citation-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
