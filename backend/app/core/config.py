@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     embedding_model: str = Field(default="text-embedding-004", alias="EMBEDDING_MODEL")
     vector_db_path: str = Field(default="backend/data/chroma", alias="VECTOR_DB_PATH")
     vector_collection: str = Field(default="ng12_guideline", alias="VECTOR_COLLECTION")
+    patients_data_path: str = Field(default="backend/data/patients.json", alias="PATIENTS_DATA_PATH")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
