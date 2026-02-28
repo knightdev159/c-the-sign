@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import math
 
+from app.services.vertex_auth import ensure_vertex_access, wrap_vertex_error
+
 
 class EmbeddingClient:
     """Embeddings provider with Vertex AI primary and deterministic mock fallback."""
@@ -17,24 +19,33 @@ class EmbeddingClient:
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         if self.provider == "vertex":
-            try:
-                return self._embed_vertex(texts)
-            except Exception:
-                pass
+            return self._embed_vertex(texts)
         return [self._embed_mock(text) for text in texts]
 
     def _embed_vertex(self, texts: list[str]) -> list[list[float]]:
+        ensure_vertex_access(
+            project=self.project,
+            location=self.location,
+            provider_label="Vertex embeddings",
+        )
+
         import vertexai
         from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
 
-        if not self.project or not self.location:
-            raise ValueError("project and location are required for Vertex embeddings")
-
-        vertexai.init(project=self.project, location=self.location)
-        model = TextEmbeddingModel.from_pretrained(self.model_name)
-        inputs = [TextEmbeddingInput(text=t, task_type="RETRIEVAL_QUERY") for t in texts]
-        outputs = model.get_embeddings(inputs)
-        return [list(item.values) for item in outputs]
+        try:
+            vertexai.init(project=self.project, location=self.location)
+            model = TextEmbeddingModel.from_pretrained(self.model_name)
+            inputs = [TextEmbeddingInput(text=t, task_type="RETRIEVAL_QUERY") for t in texts]
+            outputs = model.get_embeddings(inputs)
+            return [list(item.values) for item in outputs]
+        except Exception as exc:
+            raise wrap_vertex_error(
+                provider_label="Vertex embeddings",
+                model_name=self.model_name,
+                project=self.project,
+                location=self.location,
+                exc=exc,
+            ) from exc
 
     @staticmethod
     def _embed_mock(text: str, size: int = 256) -> list[float]:

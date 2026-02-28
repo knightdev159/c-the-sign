@@ -1,28 +1,22 @@
 """Assessment endpoint."""
 
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.config import get_settings
-from app.core.dependencies import get_llm_client, get_safety_validator, get_vector_store
+from app.core.dependencies import get_llm_client, get_patient_lookup_tool, get_safety_validator, get_vector_store
 from app.schemas.assess import AssessRequest, AssessResponse
 from app.services.decision_agent import DecisionAgent
-from app.storage.patient_repository import PatientRepository
+from app.services.patient_lookup_tool import PatientLookupTool
 
 router = APIRouter(tags=["assessment"])
 
 
-def get_patient_repository() -> PatientRepository:
-    return PatientRepository(data_path=Path(get_settings().patients_data_path))
-
-
 def get_decision_agent(
-    patient_repo: PatientRepository = Depends(get_patient_repository),
+    patient_lookup_tool: PatientLookupTool = Depends(get_patient_lookup_tool),
 ) -> DecisionAgent:
     settings = get_settings()
     return DecisionAgent(
-        patient_repo=patient_repo,
+        patient_lookup_tool=patient_lookup_tool,
         vector_store=get_vector_store(),
         llm_client=get_llm_client(),
         safety_validator=get_safety_validator(),

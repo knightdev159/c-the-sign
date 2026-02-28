@@ -6,9 +6,9 @@ from app.domain.patient import PatientRecord
 from app.schemas.assess import AssessResponse
 from app.schemas.common import CitationResponse
 from app.services.llm_client import LLMClient
+from app.services.patient_lookup_tool import PatientLookupTool
 from app.services.safety_validator import SafetyValidator
 from app.services.vector_store import VectorStore
-from app.storage.patient_repository import PatientRepository
 
 
 class DecisionAgent:
@@ -16,47 +16,32 @@ class DecisionAgent:
 
     def __init__(
         self,
-        patient_repo: PatientRepository,
+        patient_lookup_tool: PatientLookupTool,
         vector_store: VectorStore,
         llm_client: LLMClient,
         safety_validator: SafetyValidator,
         model_name: str,
     ) -> None:
-        self._patient_repo = patient_repo
+        self._patient_lookup_tool = patient_lookup_tool
         self._vector_store = vector_store
         self._llm_client = llm_client
         self._safety_validator = safety_validator
         self._model_name = model_name
 
     def assess(self, patient_id: str, top_k: int = 5) -> AssessResponse:
-        patient = self._patient_repo.get_patient(patient_id)
+        lookup_plan = self._llm_client.plan_patient_lookup(patient_id)
+        patient = self._patient_lookup_tool.invoke(lookup_plan.patient_id)
         if patient is None:
-            raise KeyError(patient_id)
+            raise KeyError(lookup_plan.patient_id)
 
         # The retrieval query is built from structured patient features.
         query = self._build_query(patient)
         chunks = self._vector_store.query(query_text=query, top_k=top_k)
 
-        # Lightweight deterministic baseline recommendation before LLM reasoning.
-        recommendation, matched_criteria = self._recommendation(patient)
-        if not chunks:
-            recommendation = "insufficient_evidence"
-
-        evidence_block = "\n".join(
-            f"- [p.{chunk.page}] {chunk.document[:260]}" for chunk in chunks[: min(5, len(chunks))]
-        )
-        user_prompt = (
-            f"Patient summary:\n{query}\n\n"
-            f"Retrieved NG12 evidence:\n{evidence_block}\n\n"
-            "Provide concise clinical reasoning grounded in the evidence."
-        )
-        reasoning = self._llm_client.generate(
-            system_prompt=(
-                "You are a clinical decision support assistant."
-                "Use only provided evidence and avoid unsupported thresholds."
-            ),
-            user_prompt=user_prompt,
-        )
+        assessment = self._llm_client.generate_assessment(patient=patient, chunks=chunks)
+        recommendation = assessment.recommendation
+        matched_criteria = assessment.matched_criteria
+        reasoning = assessment.reasoning
 
         citations = [
             CitationResponse(
@@ -104,25 +89,3 @@ class DecisionAgent:
             f"symptoms: {', '.join(patient.symptoms)}; "
             f"symptom duration (days): {patient.symptom_duration_days}."
         )
-
-    @staticmethod
-    def _recommendation(patient: PatientRecord) -> tuple[str, list[str]]:
-        symptoms = {s.lower() for s in patient.symptoms}
-
-        # These sets are intentionally explicit for readability in a take-home project.
-        urgent_referral = {
-            "unexplained hemoptysis",
-            "visible haematuria",
-            "unexplained breast lump",
-        }
-        urgent_investigation = {
-            "dysphagia",
-            "persistent hoarseness",
-            "iron-deficiency anaemia",
-        }
-
-        if symptoms.intersection(urgent_referral):
-            return "urgent_referral", sorted(symptoms.intersection(urgent_referral))
-        if symptoms.intersection(urgent_investigation):
-            return "urgent_investigation", sorted(symptoms.intersection(urgent_investigation))
-        return "no_urgent_action", []

@@ -26,7 +26,7 @@ def call_json(method: str, url: str, payload: dict[str, object]) -> tuple[int, d
         headers={"Content-Type": "application/json"},
     )
     try:
-        with urlopen(request) as response:  # noqa: S310 - local evaluation utility
+        with urlopen(request) as response:
             body = response.read().decode("utf-8")
             return response.status, json.loads(body)
     except HTTPError as err:

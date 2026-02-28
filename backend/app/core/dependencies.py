@@ -7,9 +7,11 @@ from app.core.config import get_settings
 from app.services.chat_agent import ChatAgent
 from app.services.embedding_client import EmbeddingClient
 from app.services.llm_client import LLMClient
+from app.services.patient_lookup_tool import PatientLookupTool
 from app.services.rule_engine import RuleEngine
 from app.services.safety_validator import SafetyValidator
 from app.services.vector_store import VectorStore
+from app.storage.patient_repository import PatientRepository
 from app.storage.session_memory import SessionMemoryStore
 
 
@@ -34,6 +36,17 @@ def get_vector_store() -> VectorStore:
         collection_name=settings.vector_collection,
         embedding_client=get_embedding_client(),
     )
+
+
+@lru_cache(maxsize=1)
+def get_patient_repository() -> PatientRepository:
+    settings = get_settings()
+    return PatientRepository(data_path=Path(settings.patients_data_path))
+
+
+@lru_cache(maxsize=1)
+def get_patient_lookup_tool() -> PatientLookupTool:
+    return PatientLookupTool(patient_repo=get_patient_repository())
 
 
 @lru_cache(maxsize=1)

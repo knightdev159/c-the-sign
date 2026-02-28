@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     google_cloud_project: str | None = Field(default=None, alias="GOOGLE_CLOUD_PROJECT")
     google_cloud_location: str | None = Field(default=None, alias="GOOGLE_CLOUD_LOCATION")
     llm_provider: str = Field(default="mock", alias="LLM_PROVIDER")
-    llm_model: str = Field(default="gemini-1.5-pro", alias="LLM_MODEL")
+    llm_model: str = Field(default="gemini-2.5-flash", alias="LLM_MODEL")
     embedding_provider: str = Field(default="mock", alias="EMBEDDING_PROVIDER")
     embedding_model: str = Field(default="text-embedding-004", alias="EMBEDDING_MODEL")
 

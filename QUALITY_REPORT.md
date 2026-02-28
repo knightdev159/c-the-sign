@@ -1,13 +1,20 @@
-# QUALITY_REPORT.md
+# Quality Report
 
-This report captures objective metrics from `backend/scripts/run_eval.py`.
+This report captures objective metrics from `backend/scripts/run_eval.py` using `backend/eval_cases.json`.
 
 ## How to Generate
 
-1. Run backend locally on `http://localhost:8000`.
+1. Start the backend locally from the repo root:
+
+```bash
+source backend/.venv/bin/activate
+uvicorn app.main:app --app-dir backend --reload --host 0.0.0.0 --port 8000
+```
+
 2. Execute:
 
 ```bash
+source backend/.venv/bin/activate
 python backend/scripts/run_eval.py --base-url http://localhost:8000
 ```
 
@@ -15,10 +22,14 @@ python backend/scripts/run_eval.py --base-url http://localhost:8000
 
 ## Metrics Tracked
 
+- `total_cases`
+- `passed_cases`
 - `pass_rate`
 - `citation_presence_rate`
 - `avg_groundedness_score`
 - `abstain_rate`
+
+The generated report also includes per-case status, safety action, citation count, groundedness score, and raw response payloads.
 
 ## Failure Analysis Template
 

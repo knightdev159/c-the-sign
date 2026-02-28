@@ -7,12 +7,20 @@ import argparse
 import hashlib
 import json
 import math
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
 import chromadb
 from pypdf import PdfReader
+
+
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from app.services.vertex_auth import ensure_vertex_access, wrap_vertex_error
 
 
 @dataclass
@@ -25,7 +33,7 @@ class PageChunk:
 
 
 class EmbeddingClient:
-    """Embedding client with Vertex AI primary path and deterministic mock fallback."""
+    """Embedding client with explicit Vertex or deterministic mock behavior."""
 
     def __init__(self, provider: str, model_name: str, project: str | None, location: str | None) -> None:
         self.provider = provider
@@ -35,24 +43,33 @@ class EmbeddingClient:
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         if self.provider == "vertex":
-            try:
-                return self._embed_vertex(texts)
-            except Exception as exc:  # pragma: no cover - fallback behavior
-                print(f"Vertex embedding failed: {exc}. Falling back to mock embeddings.")
+            return self._embed_vertex(texts)
         return [self._embed_mock(text) for text in texts]
 
     def _embed_vertex(self, texts: list[str]) -> list[list[float]]:
+        ensure_vertex_access(
+            project=self.project,
+            location=self.location,
+            provider_label="Vertex embeddings",
+        )
+
         import vertexai
         from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
 
-        if not self.project or not self.location:
-            raise ValueError("GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION are required for provider=vertex")
-
-        vertexai.init(project=self.project, location=self.location)
-        model = TextEmbeddingModel.from_pretrained(self.model_name)
-        inputs = [TextEmbeddingInput(text=t, task_type="RETRIEVAL_DOCUMENT") for t in texts]
-        outputs = model.get_embeddings(inputs)
-        return [list(item.values) for item in outputs]
+        try:
+            vertexai.init(project=self.project, location=self.location)
+            model = TextEmbeddingModel.from_pretrained(self.model_name)
+            inputs = [TextEmbeddingInput(text=t, task_type="RETRIEVAL_DOCUMENT") for t in texts]
+            outputs = model.get_embeddings(inputs)
+            return [list(item.values) for item in outputs]
+        except Exception as exc:
+            raise wrap_vertex_error(
+                provider_label="Vertex embeddings",
+                model_name=self.model_name,
+                project=self.project,
+                location=self.location,
+                exc=exc,
+            ) from exc
 
     @staticmethod
     def _embed_mock(text: str, size: int = 256) -> list[float]:
