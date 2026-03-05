@@ -22,6 +22,9 @@ if str(BACKEND_DIR) not in sys.path:
 
 from app.services.vertex_auth import ensure_vertex_access, wrap_vertex_error
 
+import vertexai
+from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
+
 
 @dataclass
 class PageChunk:
@@ -52,9 +55,6 @@ class EmbeddingClient:
             location=self.location,
             provider_label="Vertex embeddings",
         )
-
-        import vertexai
-        from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
 
         try:
             vertexai.init(project=self.project, location=self.location)

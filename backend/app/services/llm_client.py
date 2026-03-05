@@ -16,6 +16,9 @@ from app.services.provider_errors import (
 )
 from app.services.vertex_auth import ensure_vertex_access, wrap_vertex_error
 
+import vertexai
+from vertexai.generative_models import FunctionDeclaration, GenerativeModel, Tool
+
 
 class PatientLookupPlan(BaseModel):
     """Structured output for the patient lookup tool-selection step."""
@@ -72,9 +75,6 @@ class LLMClient:
             provider_label="Vertex generation",
         )
 
-        import vertexai
-        from vertexai.generative_models import GenerativeModel
-
         try:
             vertexai.init(project=self.project, location=self.location)
             model = GenerativeModel(self.model_name)
@@ -97,9 +97,6 @@ class LLMClient:
             location=self.location,
             provider_label="Vertex generation",
         )
-
-        import vertexai
-        from vertexai.generative_models import FunctionDeclaration, GenerativeModel, Tool
 
         tool = Tool(
             function_declarations=[
@@ -147,9 +144,6 @@ class LLMClient:
             location=self.location,
             provider_label="Vertex generation",
         )
-
-        import vertexai
-        from vertexai.generative_models import FunctionDeclaration, GenerativeModel, Tool
 
         evidence_block = "\n".join(
             f"- [p.{chunk.page} {chunk.section or 'section_unknown'}] {chunk.document[:320]}"

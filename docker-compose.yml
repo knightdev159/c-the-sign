@@ -1,11 +1,19 @@
 version: "3.9"
 services:
   app:
+    image: ng12-clinical-assistant:local
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: ng12-clinical-assistant
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     environment:
-      - LLM_PROVIDER=mock
-      - EMBEDDING_PROVIDER=mock
+      - APP_ENV=container
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS}:/root/.config/gcloud/application_default_credentials.json:ro

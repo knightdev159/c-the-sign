@@ -7,6 +7,9 @@ import math
 
 from app.services.vertex_auth import ensure_vertex_access, wrap_vertex_error
 
+import vertexai
+from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
+
 
 class EmbeddingClient:
     """Embeddings provider with Vertex AI primary and deterministic mock fallback."""
@@ -28,9 +31,6 @@ class EmbeddingClient:
             location=self.location,
             provider_label="Vertex embeddings",
         )
-
-        import vertexai
-        from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
 
         try:
             vertexai.init(project=self.project, location=self.location)

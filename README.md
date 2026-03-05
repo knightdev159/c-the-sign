@@ -82,20 +82,69 @@ Frontend URL:
 
 ## Docker
 
-Build and run the combined app:
+For the assessment deliverable, this is the simplest local run path. The container serves both the FastAPI backend and the built frontend from `http://localhost:8000`.
 
-```bash
-docker build -t ng12-clinical-assistant .
-docker run --rm -p 8000:8000 ng12-clinical-assistant
+If you want to present the live Vertex-backed flow, set these in the root `.env` first:
+
+```env
+LLM_PROVIDER=vertex
+EMBEDDING_PROVIDER=vertex
+LLM_MODEL=gemini-2.5-flash
+EMBEDDING_MODEL=text-embedding-004
+GOOGLE_CLOUD_PROJECT=<gcp-project-id>
+GOOGLE_CLOUD_LOCATION=<gcp-region>
+GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/on/your/mac/to/application_default_credentials.json
 ```
 
-Or with Compose:
+The compose file mounts the host ADC file into the container and rewrites `GOOGLE_APPLICATION_CREDENTIALS` to a valid in-container path.
+
+### Recommended: one command
 
 ```bash
 docker compose up --build
 ```
 
-Docker serves the built frontend and API from the same origin on port `8000`.
+Then open:
+
+- UI + API root: `http://localhost:8000/`
+- Swagger docs: `http://localhost:8000/docs`
+- Health check: `http://localhost:8000/healthz`
+
+### Alternative: build + run manually
+
+```bash
+docker build -t ng12-clinical-assistant .
+docker run --rm \
+  --env-file .env \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json \
+  -v "$GOOGLE_APPLICATION_CREDENTIALS:/root/.config/gcloud/application_default_credentials.json:ro" \
+  -p 8000:8000 \
+  ng12-clinical-assistant
+```
+
+If you do not want Vertex for a local run, set `LLM_PROVIDER=mock` and `EMBEDDING_PROVIDER=mock` in `.env` before starting the container.
+
+### Docker behavior
+
+- The frontend is prebuilt into the image and served by the FastAPI app.
+- `/assess`, `/chat`, `/chat/{session_id}/history`, and `DELETE /chat/{session_id}` are available from the same container.
+- The committed Chroma index in `backend/data/chroma` is already included in the image, so ingestion is not required for a first run.
+- `docker compose up --build` uses the shared root `.env`, so the same Vertex project/location settings you use locally also apply to the container.
+
+### Optional: rebuild the index before or outside Docker
+
+If you want to regenerate `backend/data/chroma`, run the ingestion script locally first:
+
+```bash
+python backend/scripts/ingest_ng12.py \
+  --pdf backend/data/ng12.pdf \
+  --persist-dir backend/data/chroma \
+  --collection ng12_guideline \
+  --provider mock \
+  --reset
+```
+
+Then rebuild the image or rerun Compose.
 
 ## Environment variables
 
@@ -210,6 +259,29 @@ python backend/scripts/ingest_ng12.py \
 ```
 
 `gcloud auth login` alone is not enough for the local Vertex SDK flow used here. If you prefer a service account, set `GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json` instead.
+
+## Chat endpoints
+
+The chat mode uses the same vector index as `/assess`.
+
+- `POST /chat`
+- `GET /chat/{session_id}/history`
+- `DELETE /chat/{session_id}`
+
+You can exercise them through:
+
+- Swagger UI at `http://localhost:8000/docs`
+- [http_examples.http](/Users/moon/Documents/c-the-sign/backend/http_examples.http)
+
+Example:
+
+```json
+{
+  "session_id": "demo",
+  "message": "What symptoms trigger urgent referral for lung cancer?",
+  "top_k": 5
+}
+```
 
 ## Testing and evaluation
 
